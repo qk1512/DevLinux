@@ -10,7 +10,7 @@ void turn_pump_on()
     if (pump_state == PUMP_OFF)
     {
         pump_state = PUMP_ON;
-        printf("[ACTUATOR] Bơm nước: BẬT\n");
+        printf("[ACTUATOR] Pumping: ON\n");
     }
 }
 
@@ -19,7 +19,7 @@ void turn_pump_off()
     if (pump_state == PUMP_ON)
     {
         pump_state = PUMP_OFF;
-        printf("[ACTUATOR] Bơm nước: TẮT\n");
+        printf("[ACTUATOR] Pumping: OFF\n");
     }
 }
 
