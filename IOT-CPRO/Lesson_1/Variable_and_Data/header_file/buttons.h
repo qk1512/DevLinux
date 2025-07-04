@@ -1,9 +1,9 @@
-// buttons.h
 #ifndef BUTTONS_H
 #define BUTTONS_H
 
-#include "config.h"
-
-void handle_buttons(SystemConfig *config);
+    void
+    button_init(void);
+void button_process(void);
+void button_trigger_manual_watering(void);
 
 #endif

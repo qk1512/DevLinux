@@ -1,70 +1,52 @@
-// actuators.c
-#include "actuators.h"
 #include <stdio.h>
+#include <stdlib.h>
+#include "actuators.h"
 
-static PumpState pump_state = PUMP_OFF;
-static LedStatus led_status = LED_NORMAL;
+static PumpState_t pump_state = PUMP_OFF;
+static LedState_t led_state = LED_NORMAL;
 
-void turn_pump_on()
+void actuator_init(void)
 {
-    if (pump_state == PUMP_OFF)
-    {
-        pump_state = PUMP_ON;
-        printf("[ACTUATOR] Pumping: ON\n");
-    }
+    pump_state = PUMP_OFF;
+    led_state = LED_NORMAL;
+    printf("Actuators initialized\n");
 }
 
-void turn_pump_off()
+void actuator_set_pump_state(PumpState_t state)
 {
-    if (pump_state == PUMP_ON)
-    {
-        pump_state = PUMP_OFF;
-        printf("[ACTUATOR] Pumping: OFF\n");
-    }
+    pump_state = state;
+    printf("Pump %s\n", state == PUMP_ON ? "ON" : "OFF");
 }
 
-PumpState get_pump_state()
+PumpState_t actuator_get_pump_state(void)
 {
     return pump_state;
 }
 
-void set_led_status(LedStatus status)
+void actuator_set_led_state(LedState_t state)
 {
-    if (led_status != status)
+    led_state = state;
+}
+
+const char *actuator_get_led_state_string(void)
+{
+    switch (led_state)
     {
-        led_status = status;
-        const char *msg = "";
-        switch (status)
-        {
-        case LED_NORMAL:
-            msg = "Green - Normal";
-            break;
-        case LED_WATERING:
-            msg = "Yellow - Watering";
-            break;
-        case LED_LOW_MOISTURE_ALERT:
-            msg = "Red - SoilMoisture Low";
-            break;
-        case LED_ERROR:
-            msg = "Red Blink - Error";
-            break;
-        }
-        printf("[LED] Status: %s\n", msg);
+    case LED_NORMAL:
+        return "NORMAL";
+    case LED_WATERING:
+        return "WATERING";
+    case LED_LOW_MOISTURE_ALERT:
+        return "LOW_MOISTURE";
+    case LED_ERROR:
+        return "ERROR";
+    default:
+        return "UNKNOWN";
     }
 }
 
-void update_led_status(const SystemConfig *config, const SensorData *sensor)
+void actuator_update_led(void)
 {
-    if (get_pump_state() == PUMP_ON)
-    {
-        set_led_status(LED_WATERING);
-    }
-    else if (sensor->soil_moisture < config->moisture_min_threshold)
-    {
-        set_led_status(LED_LOW_MOISTURE_ALERT);
-    }
-    else
-    {
-        set_led_status(LED_NORMAL);
-    }
+    // Mô phỏng cập nhật LED
+    //printf("LED State: %s\n", actuator_get_led_state_string());
 }

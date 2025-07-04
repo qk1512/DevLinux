@@ -1,11 +1,33 @@
-// sensors.c
-#include "sensors.h"
 #include <stdio.h>
+#include <stdlib.h>
+#include "sensors.h"
 
-void read_sensors(SensorData *sensor)
+static SensorData_t sensor_data = {0};
+
+void sensor_init(void)
 {
-    static int counter = 0;
-    sensor->soil_moisture = 25 + (counter++ % 30); // giả lập dao động độ ẩm
-    sensor->temperature = 25.0;                    // giữ cố định
-    printf("[SENSOR] SoilMoisture: %d%%, Temperature: %.1f°C\n", sensor->soil_moisture, sensor->temperature);
+    sensor_data.soil_moisture = 50; // Giá trị mặc định
+    sensor_data.temperature = 25.0;
+    sensor_data.is_valid = true;
+    printf("Sensors initialized\n");
+}
+
+void sensor_read_data(void)
+{
+    static uint32_t last_read = 0;
+    uint32_t current_time = get_system_time();
+
+    if (current_time - last_read >= SENSOR_READ_INTERVAL_MS)
+    {
+        // Mô phỏng đọc cảm biến
+        sensor_data.soil_moisture = sensor_data.soil_moisture > 10 ? sensor_data.soil_moisture - 5 : 10;
+        sensor_data.temperature = 25.0 + (rand() % 50) / 10.0;
+        sensor_data.is_valid = true;
+        last_read = current_time;
+    }
+}
+
+SensorData_t sensor_get_data(void)
+{
+    return sensor_data;
 }

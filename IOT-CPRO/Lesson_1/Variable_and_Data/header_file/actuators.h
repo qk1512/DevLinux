@@ -1,14 +1,13 @@
-// actuators.h
 #ifndef ACTUATORS_H
 #define ACTUATORS_H
 
 #include "config.h"
 
-void turn_pump_on();
-void turn_pump_off();
-PumpState get_pump_state();
-
-void set_led_status(LedStatus status);
-void update_led_status(const SystemConfig *config, const SensorData *sensor);
+void actuator_init(void);
+void actuator_set_pump_state(PumpState_t state);
+PumpState_t actuator_get_pump_state(void);
+void actuator_set_led_state(LedState_t state);
+const char *actuator_get_led_state_string(void);
+void actuator_update_led(void);
 
 #endif

@@ -1,38 +1,101 @@
-// watering_logic.c
-#include "watering_logic.h"
-#include "actuators.h"
 #include <stdio.h>
-#include <time.h>
+#include "watering_logic.h"
+#include "sensors.h"
+#include "actuators.h"
 
-static clock_t last_watering_time = 0;
+static SystemConfig_t config = {
+    .moisture_min = MOISTURE_THRESHOLD_MIN,
+    .moisture_max = MOISTURE_THRESHOLD_MAX,
+    .max_watering_time = MAX_WATERING_TIME_MS,
+    .sensor_interval = SENSOR_READ_INTERVAL_MS,
+    .mode = MODE_AUTO};
 
-void process_watering_logic(SystemConfig *config, SensorData *sensor)
+static uint32_t last_watering_time = 0;
+static uint32_t watering_start_time = 0;
+static bool is_watering = false;
+
+void watering_logic_init(void)
 {
-    clock_t now = clock();
-    double time_since_last = (double)(now - last_watering_time) / CLOCKS_PER_SEC * 1000;
+    printf("Watering logic initialized\n");
+}
 
-    if (get_pump_state() == PUMP_OFF)
+void watering_logic_process(void)
+{
+    SensorData_t sensor = sensor_get_data();
+    uint32_t current_time = get_system_time();
+
+    if (!sensor.is_valid)
     {
-        if (sensor->soil_moisture < config->moisture_min_threshold && time_since_last >= config->sensor_check_interval_ms)
-        {
-            turn_pump_on();
-            last_watering_time = clock();
-        }
+        actuator_set_led_state(LED_ERROR);
+        actuator_set_pump_state(PUMP_OFF);
+        return;
     }
-    else
+
+    if (config.mode == MODE_AUTO)
     {
-        double watering_duration = (double)(now - last_watering_time) / CLOCKS_PER_SEC * 1000;
-        if (sensor->soil_moisture >= config->moisture_max_threshold || watering_duration >= config->max_watering_time_ms)
+        if (is_watering)
         {
-            turn_pump_off();
+            // Kiểm tra điều kiện dừng tưới
+            if (sensor.soil_moisture >= config.moisture_max ||
+                current_time - watering_start_time >= config.max_watering_time)
+            {
+                actuator_set_pump_state(PUMP_OFF);
+                is_watering = false;
+                actuator_set_led_state(LED_NORMAL);
+            }
+            else
+            {
+                actuator_set_led_state(LED_WATERING);
+            }
+        }
+        else
+        {
+            // Kiểm tra điều kiện bắt đầu tưới
+            if (sensor.soil_moisture < config.moisture_min &&
+                current_time - last_watering_time >= config.sensor_interval)
+            {
+                actuator_set_pump_state(PUMP_ON);
+                is_watering = true;
+                watering_start_time = current_time;
+                last_watering_time = current_time;
+                actuator_set_led_state(LED_WATERING);
+                report_system_status(); // In thông tin khi bắt đầu tưới
+            }
+            else if (sensor.soil_moisture < config.moisture_min)
+            {
+                actuator_set_led_state(LED_LOW_MOISTURE_ALERT);
+            }
+            else
+            {
+                actuator_set_led_state(LED_NORMAL);
+            }
         }
     }
 }
 
-void report_status(SystemConfig *config, SensorData *sensor)
+void report_system_status(void)
 {
-    const char *mode_str = config->mode == MODE_AUTO ? "Auto" : "Manual";
-    const char *pump_str = get_pump_state() == PUMP_ON ? "Pump ON" : "Pump OFF";
-    printf("[STATUS] Mode: %s | Pump: %s | SoilMoisture: %d%%\n",
-           mode_str, pump_str, sensor->soil_moisture);
+    SensorData_t sensor = sensor_get_data();
+    printf("System Status:\n");
+    printf("Mode: %s\n", config.mode == MODE_AUTO ? "AUTO" : "MANUAL");
+    printf("Soil Moisture: %d%%\n", sensor.soil_moisture);
+    printf("Temperature: %.1f°C\n", sensor.temperature);
+    printf("Pump: %s\n", actuator_get_pump_state() == PUMP_ON ? "ON" : "OFF");
+    printf("LED: %s\n", actuator_get_led_state_string());
+}
+
+SystemMode_t get_system_mode(void)
+{
+    return config.mode;
+}
+
+void set_system_mode(SystemMode_t mode)
+{
+    config.mode = mode;
+    if (mode == MODE_MANUAL)
+    {
+        actuator_set_pump_state(PUMP_OFF);
+        is_watering = false;
+        actuator_set_led_state(LED_NORMAL);
+    }
 }
