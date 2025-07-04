@@ -2,20 +2,32 @@
 #include <stdlib.h>
 #include "sensors.h"
 
-// Simulated sensor reading
-void sensors_read(sensor_data_t *data)
+static SensorData_t sensor_data = {0};
+
+void sensor_init(void)
 {
-    // Simulate reading from ADC or other interface
-    data->soil_moisture = (float)(rand() % 101);             // Random value 0-100%
-    data->temperature = 20.0 + (float)(rand() % 150) / 10.0; // 20.0-34.9°C
-    data->is_valid = true;                                   // Assume sensors are working
-    printf("Sensor Read: Soil Moisture = %.1f%%, Temperature = %.1f°C\n",
-           data->soil_moisture, data->temperature);
+    sensor_data.soil_moisture = 50; // Giá trị mặc định
+    sensor_data.temperature = 25.0;
+    sensor_data.is_valid = true;
+    printf("Sensors initialized\n");
 }
 
-void sensors_init(void)
+void sensor_read_data(void)
 {
-    // Initialize ADC or sensor interfaces (simulated)
-    srand((unsigned int)time(NULL));
-    printf("Sensors Initialized\n");
+    static uint32_t last_read = 0;
+    uint32_t current_time = get_system_time();
+
+    if (current_time - last_read >= SENSOR_READ_INTERVAL_MS)
+    {
+        // Mô phỏng đọc cảm biến
+        sensor_data.soil_moisture = sensor_data.soil_moisture > 10 ? sensor_data.soil_moisture - 5 : 10;
+        sensor_data.temperature = 25.0 + (rand() % 50) / 10.0;
+        sensor_data.is_valid = true;
+        last_read = current_time;
+    }
+}
+
+SensorData_t sensor_get_data(void)
+{
+    return sensor_data;
 }

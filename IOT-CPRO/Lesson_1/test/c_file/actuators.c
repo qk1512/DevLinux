@@ -1,49 +1,52 @@
 #include <stdio.h>
+#include <stdlib.h>
 #include "actuators.h"
 
-static led_status_t current_led_status = LED_NORMAL;
+static PumpState_t pump_state = PUMP_OFF;
+static LedState_t led_state = LED_NORMAL;
 
-void actuators_init(void)
+void actuator_init(void)
 {
-    // Initialize GPIO for pump and LED (simulated)
-    printf("Actuators Initialized\n");
+    pump_state = PUMP_OFF;
+    led_state = LED_NORMAL;
+    printf("Actuators initialized\n");
 }
 
-void actuators_pump_on(void)
+void actuator_set_pump_state(PumpState_t state)
 {
-    printf("Pump ON\n");
+    pump_state = state;
+    printf("Pump %s\n", state == PUMP_ON ? "ON" : "OFF");
 }
 
-void actuators_pump_off(void)
+PumpState_t actuator_get_pump_state(void)
 {
-    printf("Pump OFF\n");
+    return pump_state;
 }
 
-void actuators_set_led(led_status_t status)
+void actuator_set_led_state(LedState_t state)
 {
-    current_led_status = status;
+    led_state = state;
 }
 
-void actuators_update_led(void)
+const char *actuator_get_led_state_string(void)
 {
-    const char *status_str;
-    switch (current_led_status)
+    switch (led_state)
     {
     case LED_NORMAL:
-        status_str = "Green (Normal)";
-        break;
+        return "NORMAL";
     case LED_WATERING:
-        status_str = "Yellow (Watering)";
-        break;
+        return "WATERING";
     case LED_LOW_MOISTURE_ALERT:
-        status_str = "Red (Low Moisture)";
-        break;
+        return "LOW_MOISTURE";
     case LED_ERROR:
-        status_str = "Red (Error)";
-        break;
+        return "ERROR";
     default:
-        status_str = "Unknown";
-        break;
+        return "UNKNOWN";
     }
-    printf("LED Status: %s\n", status_str);
+}
+
+void actuator_update_led(void)
+{
+    // Mô phỏng cập nhật LED
+    //printf("LED State: %s\n", actuator_get_led_state_string());
 }

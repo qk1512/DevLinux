@@ -1,44 +1,60 @@
 #include <stdio.h>
 #include <stdbool.h>
-#include <time.h>
-#include "header_file/sensors.h"
-#include "header_file/watering_logic.h"
-#include "header_file/actuators.h"
-#include "header_file/buttons.h"
-#include "header_file/config.h"
+#include <stdint.h>
+#include <unistd.h>
+#include "config.h"
+#include "sensors.h"
+#include "watering_logic.h"
+#include "actuators.h"
+#include "buttons.h"
 
-int main()
+void system_init(void)
 {
-    // Initialize system
-    sensors_init();
-    actuators_init();
-    buttons_init();
+    sensor_init();
+    actuator_init();
+    button_init();
     watering_logic_init();
+    printf("SPWS Initialized - Default MODE_AUTO\n");
+}
 
-    printf("SPWS Initialized. Starting in MODE_AUTO.\n");
+int main(void)
+{
+    system_init();
 
     while (true)
     {
-        // Handle button events
-        buttons_check();
+        //printf("Debug: Main loop iteration\n"); // Debug: Xác nhận vòng lặp chạy
+        button_process();
+        watering_logic_process();
+        actuator_update_led();
+        sensor_read_data();
 
-        // Update sensor data periodically
-        if (watering_logic_is_sensor_check_due())
+        // In trạng thái định kỳ (mô phỏng)
+        static uint32_t last_report = 0;
+        uint32_t current_time = get_system_time();
+        //printf("Debug: current_time = %u, last_report = %u\n", current_time, last_report); // Debug
+        if (current_time - last_report >= REPORT_INTERVAL_MS)
         {
-            sensor_data_t sensor_data;
-            sensors_read(&sensor_data);
-            watering_logic_update(&sensor_data);
+            report_system_status();
+            last_report = current_time;
         }
 
-        // Update LED status
-        actuators_update_led();
-
-        // Send periodic status report
-        watering_logic_report_status();
-
-        // Simulate delay for power efficiency (e.g., 100ms)
-        nanosleep(&(struct timespec){.tv_sec = 0, .tv_nsec = 100000000}, NULL);
+        // Độ trễ hệ thống
+        delay_ms(SYSTEM_LOOP_DELAY_MS); // Dùng đúng SYSTEM_LOOP_DELAY_MS
     }
 
     return 0;
+}
+
+uint32_t get_system_time(void)
+{
+    static uint32_t time = 0;
+    //printf("Debug: get_system_time = %u\n", time); // Debug
+    return time++;
+}
+
+void delay_ms(uint32_t ms)
+{
+    usleep(ms * 1000);                              // Chuyển đổi ms thành micro giây
+    //printf("Delayed for %u ms using usleep\n", ms); // Sửa %u để in đúng ms
 }

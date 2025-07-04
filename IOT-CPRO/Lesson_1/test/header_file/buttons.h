@@ -1,10 +1,9 @@
 #ifndef BUTTONS_H
 #define BUTTONS_H
 
-#include <stdbool.h>
-#include <time.h>
-
-void buttons_init(void);
-void buttons_check(void);
+    void
+    button_init(void);
+void button_process(void);
+void button_trigger_manual_watering(void);
 
 #endif
