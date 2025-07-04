@@ -7,6 +7,12 @@
 #include <stdio.h>
 #include <unistd.h> // for sleep (simulate delay)
 
+
+void init()
+{
+    
+}
+
 int main()
 {
     SystemConfig config = {
